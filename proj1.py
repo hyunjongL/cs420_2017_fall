@@ -1,13 +1,12 @@
 import sys
 
 input_name = sys.argv[1]
-print(input_name)
-
 input_file = open(input_name, 'r')
 input_txt = input_file.read()
 output_txt = ''
 operators = ['*', '/', '+', '-']
 
+#Basic functions to figure out if a character is a number, letter or an operator
 def is_letter(x):
     if x >= 'a' and x <= 'z':
         return True
@@ -25,7 +24,75 @@ def is_operator(x):
         return True
     return False
 
-def check_line(line):
+class Tree():   # Class Tree
+                # It has left, right and data.
+    def __init__(self, x):
+        self.left = None
+        self.right = None
+        self.data = x
+
+    def set_right(self, x):
+        self.right = x
+
+    def set_left(self, x):
+        self.left = x
+
+    def set_data(self, x):
+        self.data = x
+
+    def empty(self):
+        if self.left == None and self.right == None:
+            return True
+        return False
+
+    def rightmost(self):
+        if self.right == None:
+            return self
+        else:
+            return self.right.rightmost()
+
+def preorder_trav(root):    #traverses a tree in preorder way
+    result = root.data
+    if root.left != None:
+        result += preorder_trav(root.left)
+        result += preorder_trav(root.right)
+    return result
+
+
+def make_tree(nodes):       #makes a tree based on the given nodes
+    state = 1
+    pos = 1
+    max_len = len(nodes)
+    if max_len == 0:
+        return -1
+    top = Tree(nodes[0])
+    while(pos < max_len):
+        if state == 0:      # num or var
+            if is_operator(nodes[pos]):
+                return -1
+            else :
+                new = Tree(nodes[pos])
+                top.rightmost().set_right(new)
+                pos += 1
+            state += 1
+        elif state == 1:
+            if is_operator(nodes[pos]):
+                if nodes[pos] == '*' or nodes[pos] == '/':
+                    temp = top.rightmost().data
+                    top.rightmost().set_data(nodes[pos])
+                    top.rightmost().set_left(Tree(temp))
+                    pos += 1
+                else :
+                    new = Tree(nodes[pos])
+                    new.set_left(top)
+                    top = new
+                    pos += 1
+                state -= 1
+            else :
+                return -1
+    return top
+
+def check_line(line):   #checks if a list of nodes has correct syntax
     state = 0
     for i in line:
         if state == 0 and (not is_operator(i)):
@@ -41,7 +108,8 @@ def check_line(line):
     else :
         return False
 
-def parse_nodes(nodes):
+def parse_nodes(nodes): #returns a preorder traversed result of a tree without making a tree
+                        #currently not used
     newnodes = list()
     pos = 0
 
@@ -67,11 +135,10 @@ def parse_nodes(nodes):
     return finalnode
 
 # Returns a parsed line of code
-def parse_line2(line):
+def parse_line(line):
     nodes = list()
     pos = 0
     max_len = len(line)
-    print(max_len)
     while(pos < max_len):
         if line[pos] == ' ':
             if (pos == 0) or (pos == max_len - 1):
@@ -106,15 +173,15 @@ def parse_line2(line):
                 return 'incorrect syntax'
     if(not check_line(nodes)):
         return 'incorrect syntax'
-    return parse_nodes(nodes)
+    #return parse_nodes(nodes)
+    return preorder_trav(make_tree(nodes))
 
 
-print(is_letter('a'))
 
 for line in input_txt.split('\n'):
     if(line == ''):
         continue
-    output_txt += parse_line2(line)
+    output_txt += parse_line(line)
     output_txt += '\n'
 
 
