@@ -22,12 +22,7 @@ class function:
         self.type = type
         self.line = 0
         self.parameters = parameters
-        prototype = type + ' ' + name + '('
-        for i in range(len(parameters)-1):
-            i = parameters[i]
-            prototype += i[0] + ' ' + i[1] + ', '
-        prototype += parameters[-1][0] + ' ' + parameters[-1][1] + ')'
-        self.prototype = prototype
+        self.num = len(parameters)
 
     def __str__(self):
         return self.prototype + ' at line ' + str(self.line)

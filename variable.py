@@ -27,7 +27,7 @@ class variable:
             self.value = value
         self.parent = parent
         self.size = size
-        self.line = 0
+        self.line = line
         self.num = num
         self.env = env
         if addr == -1:
@@ -37,7 +37,7 @@ class variable:
                 raise Exception("Address not able to allocate free space")
         else:
             self.addr = addr
-        self.addrstr = str.format('0x{:08x}', self.addr)
+        self.addrstr = str.format('0x{:04x}', self.addr)
 
     def set_variable(self, value, line=0):
         new_var = variable(self.name,

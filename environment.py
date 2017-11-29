@@ -10,7 +10,8 @@ man = variable.man_init(max_mem_size)
 
 
 class environment:
-    def __init__(self, ret=0, parent=None):
+    def __init__(self, ret=0, parent=None, name=''):
+        self.name = name
         self.parent = parent
         self.names = {}
         self.ret = ret
@@ -37,10 +38,23 @@ class environment:
         else:
             return None, None
 
-    def dec_variable(self, name, type, num=0):
-        new_var = variable.variable(name, type, num=num)
+    def dec_variable(self, name, type_, num=0, line=0):
+        start_addr = None
+        if num > 0 and type_[-1] =='*':
+
+            for i in range(num):
+                name_ = name + '[' + str(i) + ']'
+                new_var_ = variable.variable(name_, type_[:-1], line=line)
+                if i == 0:
+                    start_addr = new_var_.addr
+                self.names[new_var_.name] = new_var_
+
+        if start_addr is None:
+            new_var = variable.variable(name, type_, line=line)
+        else:
+            new_var = variable.variable(name, type_, value=start_addr, num=num, line=line)
         if name in self.names:
-            new_var.parent = self.names[name]
+                new_var.parent = self.names[name]
         self.names[name] = new_var
 
     def set_variable(self, name, value, num=None, line=0):
@@ -48,28 +62,36 @@ class environment:
         if parent is None:
             raise Exception("Variable " + name + " has not been declared")
         if num is None:
-            new_var = parent.set_variable(value, line)
+            if value != parent.value:
+                new_var = parent.set_variable(value, line)
             # new_var = variable.variable(name, parent.type, value=value, parent=parent)
         else:
-            new_var = parent.set_variable(value, line)
+            if value != parent.value:
+                new_var = parent.set_variable(value, line, num)
             # new_var = variable.variable(name, parent.type, value=value, num=num, parent=parent)
         env.names[name] = new_var
+
+    def get_variable(self, name):
+        obj, _ = self.find_name(name)
+        return obj.value
 
     def set_address(self, addr, value, line=0):
         parent, env = self.find_address(addr)
         if parent is None:
-            raise Exception("Cannot find variable at address " + str.format('0x{:08x}', addr))
+            raise Exception("Cannot find variable at address " + str.format('0x{:04x}', addr))
         new_var = parent.set_variable(value, line)
         # new_var = variable.variable(parent.name, parent.type, value=value, parent=parent)
-        env.names[parent.name] = new_var
+        env.names[new_var.name] = new_var
 
-    def new_env(self):
-        next_scope = environment(parent=self)
+    def new_env(self, name='', ret=-1):
+        next_scope = environment(parent=self, name=name, ret=ret)
         return next_scope
 
     def return_func(self, value):
         if self.parent is None:
             print("Program finished with exit code " + str(value))
+            return
+        elif self.ret == -1:
             return
         self.parent.set_address(self.ret, value)
         for i in self.names:
@@ -77,12 +99,12 @@ class environment:
         return self.parent
 
     def __str__(self):
-        result = ''
-        result += ('return address: ' + str.format('0x{:08x}', self.ret))
+        result = 'env name: ' + self.name
+        result += ('\nreturn address: ' + str.format('0x{:04x}', self.ret))
         result += ('\nsaved variables:\n')
         for i in self.names:
             i = self.names[i]
-            result += ('\t' + i.name + ' ' + i.addrstr + ' ' + str(i.value) + '\n')
+            result += ('\t' + i.type + '\t' + i.name + '\t' + i.addrstr + '\t' + str(i.value) + '\n')
         if self.parent is None:
             return result
         return result + str(self.parent)
