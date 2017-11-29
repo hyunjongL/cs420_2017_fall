@@ -112,7 +112,6 @@ def parse_nodes(nodes): #returns a preorder traversed result of a tree without m
                         #currently not used
     newnodes = list()
     pos = 0
-
     max_len = len(nodes)
     while(pos < max_len):
         if nodes[pos] == '*' or nodes[pos] == '/':
@@ -135,24 +134,13 @@ def parse_nodes(nodes): #returns a preorder traversed result of a tree without m
     return finalnode
 
 # Returns a parsed line of code
-def parse_line(line):
+def parse_line_to_nodes(line):
     nodes = list()
     pos = 0
     max_len = len(line)
     while(pos < max_len):
         if line[pos] == ' ':
-            if (pos == 0) or (pos == max_len - 1):
-                pos += 1
-                continue
-            else :
-                if is_operator(line[pos-1]) or is_operator(line[pos+1]):
-                    if is_operator(line[pos-1]) and is_operator(line[pos+1]):
-                        return 'incorrect syntax'
-                    else:
-                        pos += 1
-                        continue
-                else :
-                    return 'incorrect syntax'
+            pos += 1
         else :
             if is_letter(line[pos]):
                 nodes.append(line[pos])
@@ -174,7 +162,14 @@ def parse_line(line):
     if(not check_line(nodes)):
         return 'incorrect syntax'
     #return parse_nodes(nodes)
-    return preorder_trav(make_tree(nodes))
+    return nodes
+
+
+def parse_line(line):
+    nodes = parse_line_to_nodes(line)
+    if nodes == 'incorrect syntax':
+        return 'incorrect syntax'
+    return preorder_trav(make_tree(parse_line_to_nodes(line)))
 
 
 
